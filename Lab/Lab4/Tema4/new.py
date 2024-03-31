@@ -36,14 +36,19 @@ class SparseMatrix:
         return zip(self.rows, self.cols, self.data)
 
     def has_null_diagonalBCRS(self):
-        diagonal_check = [False] * self.n  #mai rapid
-
+        diagonal_check = [False] * (self.n)  #mai rapid
         for i in range(len(self.rows)):
             if self.rows[i] == self.cols[i]:
+                print(self.rows[i])
                 diagonal_check[self.rows[i]] = True  # True daca exista
 
         return all(diagonal_check)
 
+    def get_diagonal_value(self, index):
+        for i in range(len(self.rows)):
+            if self.rows[i] == self.cols[i] == index:  # Verificăm dacă elementul este de pe diagonala principală și are indicele specificat
+                return self.data[i]  # Returnăm valoarea elementului de pe diagonala principală
+        return None 
     # def gauss_seidel(self, b, tol=1e-6, max_iter=1000):
     #     x = [0] * self.n  # Inițializăm vectorul soluție
 
@@ -77,33 +82,47 @@ class SparseMatrix:
             
     #     return norm_inf                    
 
-    def gauss_seidelBCRS(self, b, tol=1e-6, max_iter=1000):
-        x = np.zeros(self.n)  # Inițializăm vectorul soluție cu zero
-
+    def gauss_seidelBCRS(self, b, tol=1e-6, max_iter=10000):
+        # xc = np.zeros(self.n)  # Inițializăm vectorul soluție cu zero
+        xp = np.zeros(self.n)  # Vectorul anterior
+        xc = [1.0, 2.0, 3.0, 4.0, 5.0]
         k = 0
         delta_x = tol + 1  # Inițializăm delta_x cu o valoare care să satisfacă condiția de intrare în buclă
-        while k < max_iter and delta_x > tol:
-            xp = np.copy(x)
-            for i in range(0, len(self.rows), self.n):  # Iterăm prin blocuri
-                row_indices = self.rows[i:i+self.n]
-                col_indices = self.cols[i:i+self.n]
-                data_values = self.data[i:i+self.n]
-                
-                for j, (row, col, val) in enumerate(zip(row_indices, col_indices, data_values)):
-                    sum1 = np.sum(data_values[:j] * x[col_indices[:j]])
-                    sum2 = np.sum(data_values[j+1:] * xp[col_indices[j+1:]])
-                    x[row] = (b[row] - sum1 - sum2) / val
-            
-            delta_x = np.linalg.norm(x - xp)
+        while k < max_iter and delta_x >= tol and delta_x <= 1e8:  # Condiția pentru delta_x trebuie să fie >= tol și <= 1e8 conform cerințelor
+            xp = np.copy(xc)
+            # print(len(self.rows))
+            for i in range(self.n):
+                # value = 4
+                sum1 = 0
+                sum2 = 0
+                print('rows : ',self.rows)
+                print('cols : ',self.cols)
+                print('values : ',self.data)
+                for j in range(len(self.rows)):
+                    if self.rows[j] == i and self.cols[j] < i:
+                        sum1 += self.data[j] * xc[self.cols[j]]
+                        print('j : ',i,self.cols[j])
+                        print('elements : ',self.data[j],xc[self.cols[j]])
+                        print('sum1 : ',sum1)
+                    elif self.rows[j] == i and self.cols[j] == i :
+                        value = self.data[j]
+                        # print(value,i,j)    
+                    elif self.rows[j] == i and self.cols[j] > i:
+                        sum2 += self.data[j] * xp[self.cols[j]]
+                        print('sum2 : ',sum2)   
+                xc[i] = (b[i] - sum1 - sum2) / value 
+                delta_x = np.linalg.norm(xc - xp)
             k += 1
 
+        print(xc)
         if delta_x < tol:
-            return x
+            return xc
         else:
             return 'divergence'
 
+
     def calculate_residual_normBCRS(self, x, b):
-        residual = np.zeros(self.n)
+        residual = np.zeros(5)
         for i, j, val in self.getNonZeroValues():
             residual[i] += val * x[j]
         residual = np.abs(residual - b)
@@ -167,6 +186,10 @@ def loadBCRS(index):
                         x = float(val[0].strip())
                         i = int(val[1].strip())
                         j = int(val[2].strip())
+                        if i == 29251 or i == 8659 or j == 8659:
+                            print("Valoarea lui i:", i)
+                            print("Dimensiunea matricei:", n)
+                            print("Dimensiunea listei self.rows:", len(a.rows))
                         a.addMyElementBCRS(i, j, x)
                     else:
                         continue
@@ -205,8 +228,21 @@ def loadBCRS(index):
 #         print("Algoritmul Gauss-Seidel diverge.")
 
 
-n1, n2, a, b = loadBCRS(2)
-if not a.has_null_diagonalBCRS(): 
+# # Definirea unei funcții pentru a crea fișierele de intrare a_1.txt și b_1.txt
+# def create_input_files(A_data, b_data):
+#     with open("data/a_0.txt", "w") as f:
+#         for row in A_data:
+#             f.write(" ".join(map(str, row)) + "\n")
+
+#     with open("data/b_0.txt", "w") as f:
+#         f.write("\n".join(map(str, b_data)))
+
+# # Crearea fișierelor de intrare
+# create_input_files(A_data, b_data)
+
+
+n1, n2, a, b = loadBCRS(0)
+if  a.has_null_diagonalBCRS(): 
         print('e oke')
         x_approx = a.gauss_seidelBCRS(b)
         if isinstance(x_approx, list):  # Verificăm dacă x_approx este un vector numeric
@@ -217,3 +253,6 @@ if not a.has_null_diagonalBCRS():
             print("Algoritmul Gauss-Seidel diverge.")
 else:
     print('Nu are solutie')      
+
+#[-1329.26585366  8266.53658537 -3473.75498495 ...   244.7804878
+  # 250.82926829   247.80487805]    
