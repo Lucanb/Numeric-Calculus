@@ -118,27 +118,27 @@ if __name__ == '__main__':
         lambda n: [2] * n
     ]
 
-    # a = SparseMatrix.compress([
-    #     [102.5, 0, 2.5, 0, 0],
-    #     [3.5, 104.88, 1.05, 0, 0.33],
-    #     [0, 0, 100, 0, 0],
-    #     [0, 1.3, 0, 101.3, 0],
-    #     [0.73, 0, 0, 1.5, 102.23]
-    # ])
+    a = SparseMatrix.compress([
+        [102.5, 0, 2.5, 0, 0],
+        [3.5, 104.88, 1.05, 0, 0.33],
+        [0, 0, 100, 0, 0],
+        [0, 1.3, 0, 101.3, 0],
+        [0.73, 0, 0, 1.5, 102.23]
+    ])
 
-    # x = [1, 2, 3, 4, 5]
-    # b = [6, 7, 8, 9, 1]
+    x = [1, 2, 3, 4, 5]
+    b = [6, 7, 8, 9, 1]
 
-    # print(a.solve_system(b, x))
-    # for i in range(file_count):
-    #     a, b = load_system(i)
-    #     if a.check_diagonal():
-    #         x = a.solve_system(b)
-    #         if x != 'divergence':
-    #             norm = np.linalg.norm(np.array(x) - np.array(make_solution[i](a.n)))
-    #             print(f'[{i + 1}]', 'norm = 0:', norm < 1e-6)
-    #         else:
-    #             print(f'[{i + 1}]', x)
+    print(a.solve_system(b, x))
+    for i in range(file_count):
+        # a, b = load_system(i)
+        if a.check_diagonal():
+            x = a.solve_system(b)
+            if x != 'divergence':
+                norm = np.linalg.norm(np.array(x) - np.array(make_solution[i](a.n)))
+                print(f'[{i + 1}]', 'norm = 0:', norm < 1e-6)
+            else:
+                print(f'[{i + 1}]', x)
 
     # test_addition()
 
