@@ -95,7 +95,6 @@ epsilon = 1e-10
 A_init = np.random.rand(p, n)
 A_init = np.triu(A_init) + np.triu(A_init, 1).T
 A_init = np.dot(A_init.T, A_init)
-Lambda = np.diag(np.linspace(1, 10, n))
 A, U = jacobi(A_init, epsilon=epsilon)
 Lambda = calculate_eigenvalues(A_init) 
 print('Jacobi : ',A,U)
