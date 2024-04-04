@@ -94,6 +94,7 @@ n = 5
 eps = 1e-10
 A = np.random.rand(p, n)
 A = np.dot(A.T, A) 
+
 A_final = choleskyMethod(A, eps=eps)
 print(f" Choleski Matrice : \n  {A_final}")
 
