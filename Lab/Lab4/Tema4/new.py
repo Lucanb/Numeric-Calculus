@@ -2,6 +2,7 @@ import numpy as np
 import urllib.request
 import time
 from copy import deepcopy
+import math
 
 class SparseMatrix:
     def __init__(self,n):
@@ -46,22 +47,28 @@ class SparseMatrix:
 
     def get_diagonal_value(self, index):
         for i in range(len(self.rows)):
-            if self.rows[i] == self.cols[i] == index:  # Verificăm dacă elementul este de pe diagonala principală și are indicele specificat
-                return self.data[i]  # Returnăm valoarea elementului de pe diagonala principală
+            if self.rows[i] == self.cols[i] == index:  
+                return self.data[i]  
         return None 
     
     def gauss_seidel(self, b, tol=1e-6, max_iter=10000):
-        x = [0] * self.n  # Inițializăm vectorul soluție
+        x = [0] * self.n  
         # x = [1.0, 2.0, 3.0, 4.0, 5.0]
         k = 0
-        delta_x = tol + 1  # Inițializăm delta_x cu o valoare care să satisfacă condiția de intrare în buclă
+        delta_x = tol + 1  
         while k < max_iter and delta_x > tol:
             xp = x.copy()
+            delta_x=0
             for i in range(self.n):
                 sum1 = sum([self.mat[i][j] * x[j] for j in self.mat[i] if j < i])
                 sum2 = sum([self.mat[i][j] * xp[j] for j in self.mat[i] if i < j < self.n])
-                x[i] = (b[i] - sum1 - sum2) / self.mat[i].get(i, 1)  # Am schimbat 0 cu 1 pentru a evita diviziunea la 0
+                # sum2 = sum([self.mat[i][j] * x[j] for j in self.mat[i] if i < j < self.n])
+                delta_x+=abs(x[i]-(b[i] - sum1 - sum2) / self.mat[i].get(i, 1))
+                # temp=x[i]-(b[i] - sum1 - sum2) / self.mat[i].get(i, 1)
+                # delta_x+=temp*temp
+                x[i] = (b[i] - sum1 - sum2) / self.mat[i].get(i, 1)
             delta_x = np.linalg.norm(np.array(x) - np.array(xp))
+            # delta_x=math.sqrt(delta_x)
             k += 1
 
         if delta_x < tol:
@@ -86,11 +93,11 @@ class SparseMatrix:
                       
 
     # def gauss_seidelBCRS(self, b, tol=1e-6, max_iter=10000):
-    #     # xc = np.zeros(self.n)  # Inițializăm vectorul soluție cu zero
-    #     xp = np.zeros(self.n)  # Vectorul anterior
+    #     # xc = np.zeros(self.n) 
+    #     xp = np.zeros(self.n)  
     #     xc = [1.0, 2.0, 3.0, 4.0, 5.0]
     #     k = 0
-    #     delta_x = tol + 1  # Inițializăm delta_x cu o valoare care să satisfacă condiția de intrare în buclă
+    #     delta_x = tol + 1  
     #     while k < max_iter and delta_x >= tol and delta_x <= 1e8:  # Condiția pentru delta_x trebuie să fie >= tol și <= 1e8 conform cerințelor
     #         xp = np.copy(xc)
     #         # print(len(self.rows))
@@ -216,10 +223,11 @@ def sumMat():
         print(a.mat[0][0])
         print(b.mat[0][0])
         print(s.mat[0].get(0) == None)
-        for i in range(n1):
-            for j in range(n2):  # Adăugați această linie pentru a defini j în cadrul acestui bloc
-                if (a.mat[i].get(j) and b.mat[i].get(j) and not((a.mat[i].get(j) + b.mat[i].get(j) == 0 and s.mat[i].get(j) is None))):
-                        if(a.mat[i].get(j) and b.mat[i].get(j) and not(a.mat[i].get(j) + b.mat[i].get(j) == s.mat[i].get(j)) ):
+        print('valoarea dim :',a.n)
+        for i in range(a.n):
+            for j in a.mat[i]:
+                if (a.mat[i].get(j) and b.mat[i].get(j) and not((a.mat[i].get(j) + b.mat[i].get(j) == 0 and s.mat[i].get(j) is None)) and (a.mat[j].get(i) and b.mat[j].get(i) and not((a.mat[j].get(i) + b.mat[j].get(i) == 0 and s.mat[j].get(i) is None)))):
+                        if((a.mat[i].get(j) and b.mat[i].get(j) and not(a.mat[i].get(j) + b.mat[i].get(j) == s.mat[i].get(j)) and (a.mat[j].get(i)) and b.mat[j].get(i) and not(a.mat[j].get(i) + b.mat[j].get(i) == s.mat[j].get(i)))):
                             print(f"Elementele care îndeplinesc condiția: a[{i}][{j}] = {a.mat[i][j]}, s[{i}][{j}] = {s.mat[i].get(j)}")
                             return False
         return True 
@@ -293,18 +301,18 @@ def loadBonus():
         return None, None, None, None
 
 
-# n1, n2, a, b = loadData(1)
-# if a.has_null_diagonal():
-#     print("Matricea are un element diagonal nul. Sistemul nu poate fi rezolvat folosind metoda iterativă Gauss-Seidel.")
-# else:
-#     print('e oke')
-#     x_approx = a.gauss_seidel(b)
-#     if isinstance(x_approx, list):  # Verificăm dacă x_approx este un vector numeric
-#         print("Soluția aproximată:", x_approx)
-#         residual_norm = a.calculate_residual_norm(x_approx, b)
-#         print("Norma reziduului:", residual_norm)
-#     else:
-#         print("Algoritmul Gauss-Seidel diverge.")
+n1, n2, a, b = loadData(4)
+if a.has_null_diagonal():
+    print("Matricea are un element diagonal nul. Sistemul nu poate fi rezolvat folosind metoda iterativă Gauss-Seidel.")
+else:
+    print('e oke')
+    x_approx = a.gauss_seidel(b)
+    if isinstance(x_approx, list):  # Verificăm dacă x_approx este un vector numeric
+        print("Soluția aproximată:", x_approx)
+        residual_norm = a.calculate_residual_norm(x_approx, b)
+        print("Norma reziduului:", residual_norm)
+    else:
+        print("Algoritmul Gauss-Seidel diverge.")
 
 
 # # Definirea unei funcții pentru a crea fișierele de intrare a_1.txt și b_1.txt
