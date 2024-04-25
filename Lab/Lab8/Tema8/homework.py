@@ -14,7 +14,7 @@ def gradient_estimate(coord1, coord2, small_step=1e-5):
     grad_y = (func(coord1, coord2 + small_step) - func(coord1, coord2 - small_step)) / (2 * small_step)
     return arr([grad_x, grad_y])
 
-def descent_mechanism(grad_func, init_pos, rate=0.1, eps=1e-5, max_steps=10000):
+def descent_mechanism(grad_func, init_pos, rate=0.1, eps=1e-8, max_steps=10000):
     path = [init_pos]
     change = 1
     pos = init_pos
@@ -52,7 +52,7 @@ while True:
     optimal_rate = find_optimal_step(current, compute_grad)
     new_current = current - optimal_rate * gradient_here
     adaptive_trajectory.append(new_current)
-    if la.norm(new_current - current) < 1e-5:
+    if la.norm(new_current - current) < 1e-8:
         break
     current = new_current
 
