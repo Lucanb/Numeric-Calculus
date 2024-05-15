@@ -17,11 +17,6 @@ class JacobiClass:
                 self.v[idx] = self.A_init[i, j]
                 idx += 1
 
-    def get_i_j(self, i, j):
-        if i < j:
-            i, j = j, i
-        return i * (i + 1) // 2 + j
-
     def jacobiDivision(self):
         A = self.A_init.copy()
         k = 0
