@@ -1,118 +1,86 @@
 import numpy as np
 
-def jacobiDivision(A_vec, n, eps=1e-10, K_max=1000):
-    k = 0
-    while k < K_max:
-        maximum = 0
-        p, q = 0, 0
+class JacobiEigenvalueSolver:
+    def __init__(self, n, eps):
+        self.n = n
+        self.eps = eps
+        self.A_init = np.random.rand(n, n)
+        self.A_init = (self.A_init + self.A_init.T) / 2  # Making the matrix symmetric
+        self.v = np.zeros(n * (n + 1) // 2, dtype=np.float64)  # Storage for lower triangular part
+        self.U = np.eye(n)  # Orthogonal matrix for eigenvectors
+        self._fill_vector()
+
+    def _fill_vector(self):
         idx = 0
-        for i in range(n):
-            for j in range(i+1, n):
-                if abs(A_vec[idx]) > maximum:
-                    maximum = abs(A_vec[idx])
-                    p, q = i, j
+        for i in range(self.n):
+            for j in range(i + 1):
+                self.v[idx] = self.A_init[i, j]
                 idx += 1
-        
-        if maximum < eps:
-            break  
 
-        alpha = (A_vec[p*(p+1)//2 + p] - A_vec[q*(q+1)//2 + q]) / (2 * A_vec[q*(q+1)//2 + p])
-        if alpha >= 0:
-            t = -alpha + np.sqrt(alpha**2 + 1)
-        else:
-            t = -alpha - np.sqrt(alpha**2 + 1)
-        
-        const = 1 / np.sqrt(1 + t**2)
-        s = const * t
+    def _get_index(self, i, j):
+        if i < j:
+            i, j = j, i
+        return i * (i + 1) // 2 + j
 
-        idx = 0
-        for i in range(n):
-            if i == p:
-                A_vec[idx] = const * (A_vec[p*(p+1)//2 + p] + t * A_vec[q*(q+1)//2 + p])
-            elif i == q:
-                A_vec[idx] = const * (A_vec[q*(q+1)//2 + q] - t * A_vec[q*(q+1)//2 + p])
-            else:
-                A_vec[idx] = A_vec[idx] - s * (A_vec[q*(q+1)//2 + i] - A_vec[p*(p+1)//2 + i])
-            idx += 1
+    def _get_value(self, i, j):
+        return self.v[self._get_index(i, j)]
 
-        k += 1
-    
-    return A_vec
+    def _set_value(self, i, j, value):
+        self.v[self._get_index(i, j)] = value
 
-def verifEigenvaluesNorm(A_init, U, Lambda):
-    approximation = np.dot(A_init, U)
-    rez = np.dot(U, Lambda)
-    norm = np.linalg.norm(approximation - rez)
-    print("Norma matrice ||A_init * U - U * Lambda||:", norm)
+    def jacobi_algorithm(self):
+        A = self.A_init.copy()
+        k = 0
+        while True:
+            p, q = np.unravel_index(np.argmax(np.abs(np.tril(A, -1))), A.shape)
+            if abs(A[p, q]) < self.eps:
+                break
+            alpha = (A[q, q] - A[p, p]) / (2 * A[p, q])
+            t = np.sign(alpha) / (abs(alpha) + np.sqrt(alpha ** 2 + 1))
+            c = 1 / np.sqrt(t ** 2 + 1)
+            s = t * c
 
-def generate_symmetric_matrix(n):
-    A = np.random.rand(n, n)
-    A = (A + A.T) / 2  # Facem matricea să fie simetrică
-    return A
+            for i in range(self.n):
+                if i != p and i != q:
+                    A_ip = A[i, p]
+                    A_iq = A[i, q]
+                    A[i, p] = A_ip * c - A_iq * s
+                    A[p, i] = A[i, p]
+                    A[i, q] = A_iq * c + A_ip * s
+                    A[q, i] = A[i, q]
 
-# Testarea algoritmului adaptat
-p = 5
-n = 5
-eps = 1e-10
+            A_pp = A[p, p]
+            A_qq = A[q, q]
+            A[p, p] = c ** 2 * A_pp + s ** 2 * A_qq - 2 * s * c * A[p, q]
+            A[q, q] = s ** 2 * A_pp + c ** 2 * A_qq + 2 * s * c * A[p, q]
+            A[p, q] = 0
+            A[q, p] = 0
 
-# Test 1: Matrice simetrică aleatoare
-A_init_vec = np.random.rand(p * (p + 1) // 2)
-A_init = np.zeros((n, n))
-idx = 0
-for i in range(n):
-    for j in range(i+1):
-        A_init[i, j] = A_init[j, i] = A_init_vec[idx]
-        idx += 1
+            for i in range(self.n):
+                U_ip = self.U[i, p]
+                U_iq = self.U[i, q]
+                self.U[i, p] = U_ip * c - U_iq * s
+                self.U[i, q] = U_iq * c + U_ip * s
 
-A_result_vec = jacobiDivision(A_init_vec, n, eps=eps)
-A_result = np.zeros((n, n))
-idx = 0
-for i in range(n):
-    for j in range(i+1):
-        A_result[i, j] = A_result[j, i] = A_result_vec[idx]
-        idx += 1
-Lambda = np.diag(np.diag(A_result))
-U, _, _ = np.linalg.svd(A_result)
-print("Test 1:")
-print("U Matrice:")
-print(U)
-print("Jacobi Matrice:")
-print(A_result)
-verifEigenvaluesNorm(A_init, U, Lambda)
+            k += 1
+            if k > 1000:
+                break
 
-# Test 2: Matrice simetrică generată aleator
-A = generate_symmetric_matrix(n)
-A_final = jacobiDivision(A.flatten(), n, eps=eps)
-A_result = np.zeros((n, n))
-idx = 0
-for i in range(n):
-    for j in range(i+1):
-        A_result[i, j] = A_result[j, i] = A_final[idx]
-        idx += 1
-Lambda = np.diag(np.diag(A_result))
-U, _, _ = np.linalg.svd(A_result)
-print("\nTest 2:")
-print("U Matrice:")
-print(U)
-print("Jacobi Matrice:")
-print(A_result)
-verifEigenvaluesNorm(A, U, Lambda)
+        self.Lambda = np.diag(A)
+        return self.Lambda, self.U
 
-# Test 3: Matrice simetrică de dimensiune mai mare
-n = 10
-A = generate_symmetric_matrix(n)
-A_final = jacobiDivision(A.flatten(), n, eps=eps)
-A_result = np.zeros((n, n))
-idx = 0
-for i in range(n):
-    for j in range(i+1):
-        A_result[i, j] = A_result[j, i] = A_final[idx]
-        idx += 1
-Lambda = np.diag(np.diag(A_result))
-U, _, _ = np.linalg.svd(A_result)
-print("\nTest 3:")
-print("U Matrice:")
-print(U)
-print("Jacobi Matrice:")
-print(A_result)
-verifEigenvaluesNorm(A, U, Lambda)
+    def verify_eigenvalues(self):
+        A_U = np.dot(self.A_init, self.U)
+        U_Lambda = np.dot(self.U, np.diag(self.Lambda))
+        norm = np.linalg.norm(A_U - U_Lambda)
+        print("Norma matrice ||A_init * U - U * Lambda||:", norm)
+
+if __name__ == "__main__":
+    n = int(input("Enter the dimension of the matrix: "))
+    t = int(input("Enter the precision level for calculations: "))
+    eps = 10 ** -t
+    solver = JacobiEigenvalueSolver(n, eps)
+    Lambda, U = solver.jacobi_algorithm()
+    print(f"Eigenvalues (Lambda): \n{Lambda}")
+    print(f"Eigenvectors (U): \n{U}")
+    solver.verify_eigenvalues()
