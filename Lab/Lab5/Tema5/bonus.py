@@ -1,6 +1,6 @@
 import numpy as np
 
-class JacobiEigenvalueSolver:
+class JacobiClass:
     def __init__(self, n, eps):
         self.n = n
         self.eps = eps
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     n = int(input("Enter the matrix dim : "))
     t = int(input("Enter the precision level for calculations: "))
     eps = 10 ** -t
-    solver = JacobiEigenvalueSolver(n, eps)
+    solver = JacobiClass(n, eps)
     Lambda, U = solver.jacobiDivision()
     print(f"Eigenvalues (Lambda): \n{Lambda}")
     print(f"Eigenvectors (U): \n{U}")
