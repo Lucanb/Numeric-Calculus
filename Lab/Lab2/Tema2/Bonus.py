@@ -6,8 +6,8 @@ class LU_Decomposition_Solver:
         self.eps = 10 ** (-t)
         self.A_init = np.random.rand(n, n)
         self.b_init = np.random.rand(n)
-        self.Lv = np.zeros(n * (n + 1) // 2, dtype=np.float64)  # Storage for lower triangular matrix
-        self.Uv = np.zeros(n * (n + 1) // 2, dtype=np.float64)  # Storage for upper triangular matrix
+        self.Lv = np.zeros(n * (n + 1) // 2, dtype=np.float64)
+        self.Uv = np.zeros(n * (n + 1) // 2, dtype=np.float64)
 
     def indexL(self, i, j):
         """ Indexing function for accessing elements in the lower triangular vector """
