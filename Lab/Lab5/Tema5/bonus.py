@@ -17,33 +17,50 @@ class JacobiClass:
                 self.v[idx] = self.A_init[i, j]
                 idx += 1
 
+    def idx_to_v(self, i, j):
+        if i < j:
+            i, j = j, i
+        return (i * (i + 1)) // 2 + j
+
     def jacobiDivision(self):
-        A = self.A_init.copy()
+        v = self.v.copy()
         k = 0
         while True:
-            p, q = np.unravel_index(np.argmax(np.abs(np.tril(A, -1))), A.shape)
-            if abs(A[p, q]) < self.eps:
+            max_val = 0
+            p, q = -1, -1
+            for i in range(self.n):
+                for j in range(i):
+                    idx = self.idx_to_v(i, j)
+                    if abs(v[idx]) > max_val:
+                        max_val = abs(v[idx])
+                        p, q = i, j
+            
+            if max_val < self.eps:
                 break
-            alpha = (A[q, q] - A[p, p]) / (2 * A[p, q])
-            t = np.sign(alpha) / (abs(alpha) + np.sqrt(alpha ** 2 + 1))
-            c = 1 / np.sqrt(t ** 2 + 1)
+
+            idx_pq = self.idx_to_v(p, q)
+            idx_pp = self.idx_to_v(p, p)
+            idx_qq = self.idx_to_v(q, q)
+            alpha = (v[idx_qq] - v[idx_pp]) / (2 * v[idx_pq])
+            t = np.sign(alpha) / (abs(alpha) + np.sqrt(alpha**2 + 1))
+            c = 1 / np.sqrt(t**2 + 1)
             s = t * c
+
+            new_pp = c**2 * v[idx_pp] + s**2 * v[idx_qq] - 2 * s * c * v[idx_pq]
+            new_qq = s**2 * v[idx_pp] + c**2 * v[idx_qq] + 2 * s * c * v[idx_pq]
+            v[idx_pp] = new_pp
+            v[idx_qq] = new_qq
+
+            v[idx_pq] = 0
 
             for i in range(self.n):
                 if i != p and i != q:
-                    A_ip = A[i, p]
-                    A_iq = A[i, q]
-                    A[i, p] = A_ip * c - A_iq * s
-                    A[p, i] = A[i, p]
-                    A[i, q] = A_iq * c + A_ip * s
-                    A[q, i] = A[i, q]
-
-            A_pp = A[p, p]
-            A_qq = A[q, q]
-            A[p, p] = c ** 2 * A_pp + s ** 2 * A_qq - 2 * s * c * A[p, q]
-            A[q, q] = s ** 2 * A_pp + c ** 2 * A_qq + 2 * s * c * A[p, q]
-            A[p, q] = 0
-            A[q, p] = 0
+                    idx_ip = self.idx_to_v(i, p)
+                    idx_iq = self.idx_to_v(i, q)
+                    old_ip = v[idx_ip]
+                    old_iq = v[idx_iq]
+                    v[idx_ip] = c * old_ip - s * old_iq
+                    v[idx_iq] = s * old_ip + c * old_iq
 
             for i in range(self.n):
                 U_ip = self.U[i, p]
@@ -55,8 +72,9 @@ class JacobiClass:
             if k > 1000:
                 break
 
-        self.Lambda = np.diag(A)
+        self.Lambda = np.array([v[self.idx_to_v(i, i)] for i in range(self.n)])
         return self.Lambda, self.U
+
 
     def verify_eigenvalues(self):
         A_U = np.dot(self.A_init, self.U)
