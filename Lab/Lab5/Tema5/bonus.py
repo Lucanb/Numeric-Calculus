@@ -5,30 +5,24 @@ class JacobiEigenvalueSolver:
         self.n = n
         self.eps = eps
         self.A_init = np.random.rand(n, n)
-        self.A_init = (self.A_init + self.A_init.T) / 2  # Making the matrix symmetric
-        self.v = np.zeros(n * (n + 1) // 2, dtype=np.float64)  # Storage for lower triangular part
-        self.U = np.eye(n)  # Orthogonal matrix for eigenvectors
-        self._fill_vector()
+        self.A_init = (self.A_init + self.A_init.T) / 2
+        self.v = np.zeros(n * (n + 1) // 2, dtype=np.float64)
+        self.U = np.eye(n)
+        self.add_Elements_vec()
 
-    def _fill_vector(self):
+    def add_Elements_vec(self):
         idx = 0
         for i in range(self.n):
             for j in range(i + 1):
                 self.v[idx] = self.A_init[i, j]
                 idx += 1
 
-    def _get_index(self, i, j):
+    def get_i_j(self, i, j):
         if i < j:
             i, j = j, i
         return i * (i + 1) // 2 + j
 
-    def _get_value(self, i, j):
-        return self.v[self._get_index(i, j)]
-
-    def _set_value(self, i, j, value):
-        self.v[self._get_index(i, j)] = value
-
-    def jacobi_algorithm(self):
+    def jacobiDivision(self):
         A = self.A_init.copy()
         k = 0
         while True:
@@ -76,11 +70,11 @@ class JacobiEigenvalueSolver:
         print("Norma matrice ||A_init * U - U * Lambda||:", norm)
 
 if __name__ == "__main__":
-    n = int(input("Enter the dimension of the matrix: "))
+    n = int(input("Enter the matrix dim : "))
     t = int(input("Enter the precision level for calculations: "))
     eps = 10 ** -t
     solver = JacobiEigenvalueSolver(n, eps)
-    Lambda, U = solver.jacobi_algorithm()
+    Lambda, U = solver.jacobiDivision()
     print(f"Eigenvalues (Lambda): \n{Lambda}")
     print(f"Eigenvectors (U): \n{U}")
     solver.verify_eigenvalues()
