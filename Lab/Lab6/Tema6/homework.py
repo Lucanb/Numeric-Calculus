@@ -61,7 +61,7 @@ def start_interpolate(index, n, f_container):
     newton_array = np.array([Newton_polynom_calc(delta_atkiens, x_points, point) for point in precise_x])
     least_squares_y = np.array([horner_method(lsc_x, point) for point in precise_x])
 
-    test_point = x_n - 0.5  # Example test point for checking error
+    test_point = x_n - 0.5
     print(f"Test point (x̄): {test_point}")
     print("Newton Interpolation result and error at x̄:")
     print(test_point, Newton_polynom_calc(delta_atkiens, x_points, test_point), abs(Newton_polynom_calc(delta_atkiens, x_points, test_point) - selected_func(test_point)))
@@ -80,6 +80,5 @@ def start_interpolate(index, n, f_container):
     plt.grid(True)
     plt.show()
 
-# Execution part
 n, idx, f = my_inputs()
 start_interpolate(idx, n, f)
