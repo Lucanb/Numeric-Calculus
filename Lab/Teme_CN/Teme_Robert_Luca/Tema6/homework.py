@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import math
 
 def my_inputs():
-    f = [
+    functions = [
         [1, 5, lambda x: x**4 - 12*x**3 + 30*x**2 + 12, 1],
         [2, 4, lambda x: math.exp(x), 2],
         [-2, 4, lambda x: math.sin(x), 3]
@@ -11,9 +11,9 @@ def my_inputs():
     try:
         num_points = int(input('Enter number of points: '))
         func_index = int(input('Enter index of function kind - 0 to 2 - : '))
-        if num_points < 1 or func_index not in range(len(f)):
+        if num_points < 1 or func_index not in range(len(functions)):
             raise ValueError("Invalid number of points or index.")
-        return num_points, func_index, f
+        return num_points, func_index, functions
     except ValueError as error_message:
         print(f'Error: {str(error_message)}')
         exit(1)
@@ -64,20 +64,26 @@ def start_interpolate(index, n, f_container):
     test_point = x_n - 0.5
     print(f"Test point (x̄): {test_point}")
     print("Newton Interpolation result and error at x̄:")
-    print(test_point, Newton_polynom_calc(delta_atkiens, x_points, test_point), abs(Newton_polynom_calc(delta_atkiens, x_points, test_point) - selected_func(test_point)))
-    print("Least Squares result and error at x̄:")
-    print(test_point, horner_method(lsc_x, test_point), abs(horner_method(lsc_x, test_point) - selected_func(test_point)))
+    newton_result = Newton_polynom_calc(delta_atkiens, x_points, test_point)
+    newton_error = abs(newton_result - selected_func(test_point))
+    print(test_point, newton_result, newton_error)
 
-    plt.figure(figsize=(10, 6))
-    plt.plot(precise_x, O_y, label='Absolute Function', color='black')
-    plt.plot(precise_x, newton_array, '--', label='Lagrange Polynom', color='red')
-    plt.plot(precise_x, least_squares_y, '-.', label='LSC Polynom', color='blue')
-    plt.scatter(x_points, y_points, color='green', label='Sample Points')
-    plt.title('Interpolation Comparison')
-    plt.xlabel('x')
-    plt.ylabel('Function Value')
-    plt.legend()
-    plt.grid(True)
+    print("Least Squares result and error at x̄:")
+    lsc_result = horner_method(lsc_x, test_point)
+    lsc_error = abs(lsc_result - selected_func(test_point))
+    print(test_point, lsc_result, lsc_error)
+
+    # Plotting
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(precise_x, O_y, label='Absolute Function', color='black')
+    ax.plot(precise_x, newton_array, '--', label='Lagrange Polynom', color='red')
+    ax.plot(precise_x, least_squares_y, '-.', label='LSC Polynom', color='blue')
+    ax.scatter(x_points, y_points, color='green', label='Sample Points')
+    ax.set_title('Interpolation Comparison')
+    ax.set_xlabel('x')
+    ax.set_ylabel('Function Value')
+    ax.legend()
+    ax.grid(True)
     plt.show()
 
 n, idx, f = my_inputs()
